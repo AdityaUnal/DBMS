@@ -117,7 +117,9 @@ auto BufferPoolManager::Size() const -> size_t { return num_frames_; }
  *
  * @return The page ID of the newly allocated page.
  */
-auto BufferPoolManager::NewPage() -> page_id_t { UNIMPLEMENTED("TODO(P1): Add implementation."); }
+auto BufferPoolManager::NewPage() -> page_id_t { 
+  return next_page_id_.fetch_add(1,std::memory_order_relaxed);
+}
 
 /**
  * @brief Removes a page from the database, both on disk and in memory.
@@ -180,7 +182,27 @@ auto BufferPoolManager::DeletePage(page_id_t page_id) -> bool { UNIMPLEMENTED("T
  * returns `std::nullopt`; otherwise, returns a `WritePageGuard` ensuring exclusive and mutable access to a page's data.
  */
 auto BufferPoolManager::CheckedWritePage(page_id_t page_id, AccessType access_type) -> std::optional<WritePageGuard> {
-  UNIMPLEMENTED("TODO(P1): Add implementation.");
+  std::unique_lock latch(bpm_latch_);
+  auto page_table_idx = page_table_.find(page_id);
+  frame_id_t frame_id;
+  if(page_table_idx != page_table_.end()){
+    frame_id = page_table_idx->second;
+    if(replacer_->InAliveMap(frame_id) == false and replacer_->Size() == 0){
+      return std::nullopt;
+    }
+  }
+  else{
+    if(free_frames_.size() == 0){
+      return std::nullopt;
+    }
+    frame_id = free_frames_.front();
+    if(replacer_->InAliveMap(frame_id) == false and replacer_->Size() == 0){
+      return std::nullopt;
+    }
+    free_frames_.pop_front();
+  }
+  replacer_->RecordAccess(frame_id, page_id,access_type);
+  return WritePageGuard(page_id,frames_[frame_id],replacer_,bpm_latch_,disk_scheduler_);
 }
 
 /**
@@ -207,8 +229,28 @@ auto BufferPoolManager::CheckedWritePage(page_id_t page_id, AccessType access_ty
  * @return std::optional<ReadPageGuard> An optional latch guard where if there are no more free frames (out of memory)
  * returns `std::nullopt`; otherwise, returns a `ReadPageGuard` ensuring shared and read-only access to a page's data.
  */
-auto BufferPoolManager::CheckedReadPage(page_id_t page_id, AccessType access_type) -> std::optional<ReadPageGuard> {
-  UNIMPLEMENTED("TODO(P1): Add implementation.");
+ auto BufferPoolManager::CheckedReadPage(page_id_t page_id, AccessType access_type) -> std::optional<ReadPageGuard> {
+  std::unique_lock latch(bpm_latch_);
+  auto page_table_idx = page_table_.find(page_id);
+  frame_id_t frame_id;
+  if(page_table_idx != page_table_.end()){
+    frame_id = page_table_idx->second;
+    if(replacer_->InAliveMap(frame_id) == false and replacer_->Size() == 0){
+      return std::nullopt;
+    }
+  }
+  else{
+    if(free_frames_.size() == 0){
+      return std::nullopt;
+    }
+    frame_id = free_frames_.front();
+    if(replacer_->InAliveMap(frame_id) == false and replacer_->Size() == 0){
+      return std::nullopt;
+    }
+    free_frames_.pop_front();
+  }
+  replacer_->RecordAccess(frame_id, page_id,access_type);
+  return ReadPageGuard(page_id,frames_[frame_id],replacer_,bpm_latch_,disk_scheduler_);
 }
 
 /**

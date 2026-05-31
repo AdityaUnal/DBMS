@@ -16,7 +16,8 @@
 #include <optional>
 #include <thread>  // NOLINT
 #include <vector>
-
+#include <mutex>
+#include <condition_variable>
 #include "common/channel.h"
 #include "storage/disk/disk_manager.h"
 
@@ -56,7 +57,7 @@ class DiskScheduler {
   ~DiskScheduler();
 
   void Schedule(std::vector<DiskRequest> &requests);
-
+ 
   void StartWorkerThread();
 
   using DiskSchedulerPromise = std::promise<bool>;
@@ -78,6 +79,7 @@ class DiskScheduler {
    */
   void DeallocatePage(page_id_t page_id) { disk_manager_->DeletePage(page_id); }
 
+  
  private:
   /** Pointer to the disk manager. */
   DiskManager *disk_manager_ __attribute__((__unused__));

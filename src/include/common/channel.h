@@ -50,7 +50,10 @@ class Channel {
     q_.pop();
     return element;
   }
-
+  auto size() -> size_t{
+    std::unique_lock<std::mutex> lk(m_);
+    return q_.size();
+  }
  private:
   std::mutex m_;
   std::condition_variable cv_;

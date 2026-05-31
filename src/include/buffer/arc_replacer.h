@@ -55,8 +55,13 @@ class ArcReplacer {
   ~ArcReplacer() = default;
 
   auto Evict() -> std::optional<frame_id_t>;
+  // arc_replacer.h (private)
+  auto EvictInternal() -> std::optional<frame_id_t>;
+  
   void RecordAccess(frame_id_t frame_id, page_id_t page_id, AccessType access_type = AccessType::Unknown);
   void SetEvictable(frame_id_t frame_id, bool set_evictable);
+  void SetEvictableInternal(frame_id_t frame_id, bool set_evictable);
+  auto InAliveMap(frame_id_t frame_id) -> bool;
   void Remove(frame_id_t frame_id);
   auto Size() -> size_t;
 

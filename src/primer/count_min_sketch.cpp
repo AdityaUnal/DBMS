@@ -25,9 +25,12 @@ namespace bustub {
  * @throws std::invalid_argument if width or depth are zero.
  */
 template <typename KeyType>
-CountMinSketch<KeyType>::CountMinSketch(uint32_t width, uint32_t depth) : width_(width), depth_(depth) {
+CountMinSketch<KeyType>::CountMinSketch(uint32_t width, uint32_t depth) : 
+width_(width), depth_(depth),algo_space_(depth_,std::vector<uint32_t>(width_,0)) {
   /** @TODO(student) Implement this function! */
-
+  if(width <= 0 or depth <= 0){
+    throw std::invalid_argument("Depth and width should greater than 0");
+  }
   /** @spring2026 PLEASE DO NOT MODIFY THE FOLLOWING */
   // Initialize seeded hash functions
   hash_functions_.reserve(depth_);
@@ -37,8 +40,11 @@ CountMinSketch<KeyType>::CountMinSketch(uint32_t width, uint32_t depth) : width_
 }
 
 template <typename KeyType>
-CountMinSketch<KeyType>::CountMinSketch(CountMinSketch &&other) noexcept : width_(other.width_), depth_(other.depth_) {
+CountMinSketch<KeyType>::CountMinSketch(CountMinSketch &&other) noexcept : 
+width_(other.width_), depth_(other.depth_), hash_functions_(other.hash_functions_), algo_space_(other.algo_space_) {
   /** @TODO(student) Implement this function! */
+  
+
 }
 
 template <typename KeyType>
@@ -58,6 +64,11 @@ void CountMinSketch<KeyType>::Merge(const CountMinSketch<KeyType> &other) {
     throw std::invalid_argument("Incompatible CountMinSketch dimensions for merge.");
   }
   /** @TODO(student) Implement this function! */
+  for (uint32_t i = 0; i < depth_; i += 1) {
+    for (uint32_t j = 0; j < width_; j += 1) {
+      algo_space_[i][j] += other.algo_space_[i][j];
+    }
+  }
 }
 
 template <typename KeyType>
