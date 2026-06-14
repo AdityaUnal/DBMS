@@ -87,7 +87,7 @@ class FrameHeader {
    * If the frame does not hold any page data, the frame contains all null bytes.
    */
   std::vector<char> data_;
-
+  page_id_t page_id_;
   /**
    * TODO(P1): You may add any fields or helper functions under here that you think are necessary.
    *
@@ -116,6 +116,8 @@ class BufferPoolManager {
   auto NewPage() -> page_id_t;
   auto DeletePage(page_id_t page_id) -> bool;
   auto CheckedWritePage(page_id_t page_id, AccessType access_type = AccessType::Unknown)
+      -> std::optional<WritePageGuard>;
+  auto CheckedWritePageUnsafe(page_id_t page_id, AccessType access_type = AccessType::Unknown)
       -> std::optional<WritePageGuard>;
   auto CheckedReadPage(page_id_t page_id, AccessType access_type = AccessType::Unknown) -> std::optional<ReadPageGuard>;
   auto WritePage(page_id_t page_id, AccessType access_type = AccessType::Unknown) -> WritePageGuard;

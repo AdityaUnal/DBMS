@@ -260,16 +260,20 @@ auto ArcReplacer::EvictInternal() -> std::optional<frame_id_t> {
       return std::nullopt;
     };
   
-    // Preferred side first, fallback to the other side.
+    // Preferred side first, fallback to the other side if every entry there is pinned.
     if (mru_.size() < mru_target_size_) {
-        if (auto evicted_fid = evict_from(mfu_, mfu_ghost_, mru_target_size_, ArcStatus::MFU_GHOST);
+      if (auto evicted_fid = evict_from(mfu_, mfu_ghost_, mru_target_size_, ArcStatus::MFU_GHOST);
+          evicted_fid.has_value()) {
+        return evicted_fid;
+      }
+      return evict_from(mru_, mru_ghost_, replacer_size_ - mru_target_size_, ArcStatus::MRU_GHOST);
+    }
+
+    if (auto evicted_fid = evict_from(mru_, mru_ghost_, replacer_size_ - mru_target_size_, ArcStatus::MRU_GHOST);
         evicted_fid.has_value()) {
       return evicted_fid;
     }
-    }
-    
-    
-    return evict_from(mru_, mru_ghost_, replacer_size_ - mru_target_size_, ArcStatus::MRU_GHOST);
+    return evict_from(mfu_, mfu_ghost_, mru_target_size_, ArcStatus::MFU_GHOST);
   }
   
   /**
