@@ -14,6 +14,7 @@
 
 #include <queue>
 #include <string>
+#include <unordered_map>
 
 #include "storage/page/b_plus_tree_page.h"
 
@@ -54,6 +55,20 @@ class BPlusTreeInternalPage : public BPlusTreePage {
 
   auto KeyAt(int index) const -> KeyType;
 
+  // auto IndexAt(const KeyType &key) -> int;
+
+  // auto KeyToIndex(KeyType key) const -> int{
+  //   return mp[key];
+  // }
+
+  // void SetKeyToIndex(KeyType key, int index){
+  //   mp[key] = index;
+  // }V
+
+  // void RemoveKeyFromIndex(KeyType key){
+  //   mp.erase(key);
+  // }
+
   void SetKeyAt(int index, const KeyType &key);
 
   /**
@@ -61,6 +76,8 @@ class BPlusTreeInternalPage : public BPlusTreePage {
    * @return The index that corresponds to the specified value
    */
   auto ValueIndex(const ValueType &value) const -> int;
+
+  void SetValueAt(int index, const ValueType &value);
 
   auto ValueAt(int index) const -> ValueType;
 
@@ -94,6 +111,7 @@ class BPlusTreeInternalPage : public BPlusTreePage {
   // Array members for page data.
   KeyType key_array_[INTERNAL_PAGE_SLOT_CNT];
   ValueType page_id_array_[INTERNAL_PAGE_SLOT_CNT];
+  std::unordered_map<KeyType, int> mp;
   // (Spring 2025) Feel free to add more fields and helper functions below if needed
 };
 

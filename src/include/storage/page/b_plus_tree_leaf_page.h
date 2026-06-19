@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <list>
 #include <string>
 #include <utility>
 #include <vector>
@@ -73,7 +74,10 @@ class BPlusTreeLeafPage : public BPlusTreePage {
   auto GetNextPageId() const -> page_id_t;
   void SetNextPageId(page_id_t next_page_id);
   auto KeyAt(int index) const -> KeyType;
-
+  auto IsKeyPresent(const KeyType &key, const KeyComparator &comparator) const -> bool;
+  auto ValueAt(int index) const -> ValueType;
+  void InsertKeyValue(const KeyType &key,const ValueType &value,KeyComparator &comparator) ;
+  void RemoveKeyValue(const KeyType &key,KeyComparator &comparator) ;
   /**
    * @brief for test only return a string representing all keys in
    * this leaf page formatted as "(tombkey1, tombkey2, ...|key1,key2,key3,...)"

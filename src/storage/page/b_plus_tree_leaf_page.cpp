@@ -10,17 +10,26 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <algorithm>
+#include <memory>
 #include <sstream>
+#include <utility>
+#include <vector>
 
+#include "common/config.h"
 #include "common/exception.h"
+#include "common/macros.h"
 #include "common/rid.h"
+#include "gtest/gtest.h"
+#include "storage/page/b_plus_tree_page.h"
 #include "storage/page/b_plus_tree_leaf_page.h"
 
 namespace bustub {
 
 /*****************************************************************************
  * HELPER METHODS AND UTILITIES
- *****************************************************************************/
+ ***************
+ **************************************************************/
 
 /**
  * @brief Init method after creating a new leaf page
@@ -32,7 +41,14 @@ namespace bustub {
  * @param max_size Max size of the leaf node
  */
 FULL_INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_LEAF_PAGE_TYPE::Init(int max_size) { UNIMPLEMENTED("TODO(P2): Add implementation."); }
+void B_PLUS_TREE_LEAF_PAGE_TYPE::Init(int max_size) { 
+  SetPageType(IndexPageType::LEAF_PAGE);
+  SetSize(0);
+  SetMaxSize(max_size);
+  next_page_id_ = INVALID_PAGE_ID;
+  num_tombstones_ = 0;
+  key_array_[0] = KeyType();
+}
 
 /**
  * @brief Helper function for fetching tombstones of a page.
@@ -40,18 +56,25 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::Init(int max_size) { UNIMPLEMENTED("TODO(P2): A
  */
 FULL_INDEX_TEMPLATE_ARGUMENTS
 auto B_PLUS_TREE_LEAF_PAGE_TYPE::GetTombstones() const -> std::vector<KeyType> {
-  UNIMPLEMENTED("TODO(P2): Add implementation.");
+  std::vector<KeyType> res;
+  res.reserve(num_tombstones_);
+  for(auto i:tombstones_){
+    res.push_back(key_array_[i]);
+  }
+  return res;
 }
 
 /**
  * Helper methods to set/get next page id
  */
 FULL_INDEX_TEMPLATE_ARGUMENTS
-auto B_PLUS_TREE_LEAF_PAGE_TYPE::GetNextPageId() const -> page_id_t { UNIMPLEMENTED("TODO(P2): Add implementation."); }
+auto B_PLUS_TREE_LEAF_PAGE_TYPE::GetNextPageId() const -> page_id_t { 
+  return next_page_id_;
+}
 
 FULL_INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::SetNextPageId(page_id_t next_page_id) {
-  UNIMPLEMENTED("TODO(P2): Add implementation.");
+  next_page_id_ = next_page_id;
 }
 
 /*
@@ -59,7 +82,59 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::SetNextPageId(page_id_t next_page_id) {
  * array offset)
  */
 FULL_INDEX_TEMPLATE_ARGUMENTS
-auto B_PLUS_TREE_LEAF_PAGE_TYPE::KeyAt(int index) const -> KeyType { UNIMPLEMENTED("TODO(P2): Add implementation."); }
+auto B_PLUS_TREE_LEAF_PAGE_TYPE::KeyAt(int index) const -> KeyType { 
+  return key_array_[index];
+}
+
+FULL_INDEX_TEMPLATE_ARGUMENTS
+auto B_PLUS_TREE_LEAF_PAGE_TYPE::IsKeyPresent(const KeyType &key, const KeyComparator &comparator) const -> bool {
+  for (int i = 0; i < GetSize(); i++) {
+    if (comparator(key_array_[i], key) == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+FULL_INDEX_TEMPLATE_ARGUMENTS
+auto B_PLUS_TREE_LEAF_PAGE_TYPE::ValueAt(int index) const -> ValueType {
+  return rid_array_[index];
+}
+
+FULL_INDEX_TEMPLATE_ARGUMENTS
+void B_PLUS_TREE_LEAF_PAGE_TYPE::InsertKeyValue(const KeyType &key, const ValueType &value, KeyComparator &comparator) {
+  int n = GetSize();
+  BUSTUB_ASSERT(n < GetMaxSize(), "No space in leaf to insert key-value pair.");
+  std::vector<std::pair<KeyType,ValueType>> temp(n + 1);
+  for(int i = 0;i < n;i +=1){
+    temp[i] = std::make_pair(key_array_[i], rid_array_[i]);
+  }
+  temp[n] = std::make_pair(key,value);
+  std::sort(temp.begin(),temp.end(),comparator);
+  for(int i = 0; i <= n; i+=1){
+    key_array_[i] = temp[i].first;
+    rid_array_[i] = temp[i].second;
+  }
+  ChangeSizeBy(1);  
+}
+
+FULL_INDEX_TEMPLATE_ARGUMENTS
+void B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveKeyValue(const KeyType &key, KeyComparator &comparator) {
+  int n = GetSize();
+  BUSTUB_ASSERT(n < GetMaxSize(), "No space in leaf to insert key-value pair.");
+  std::vector<std::pair<KeyType,ValueType>> temp(n + 1);
+  for(int i = 0;i < n;i +=1){
+    if(comparator(key_array_[i],key)){
+      temp[i] = std::make_pair(key_array_[i], rid_array_[i]);
+    }
+  }
+  // temp[n] = std::make_pair(key,value);
+  std::sort(temp.begin(),temp.end(),comparator);
+  for(int i = 0; i <= n; i+=1){
+    key_array_[i] = temp[i].first;
+    rid_array_[i] = temp[i].second;
+  }
+  ChangeSizeBy(-1);  
+}
 
 template class BPlusTreeLeafPage<GenericKey<4>, RID, GenericComparator<4>>;
 

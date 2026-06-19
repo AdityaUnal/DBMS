@@ -13,7 +13,10 @@
 #include <iostream>
 #include <sstream>
 
+#include "common/config.h"
 #include "common/exception.h"
+#include "common/macros.h"
+#include "storage/page/b_plus_tree_page.h"
 #include "storage/page/b_plus_tree_internal_page.h"
 
 namespace bustub {
@@ -31,7 +34,14 @@ namespace bustub {
  * @param max_size Maximal size of the page
  */
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Init(int max_size) { UNIMPLEMENTED("TODO(P2): Add implementation."); }
+void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Init(int max_size) { 
+  SetPageType(IndexPageType::INTERNAL_PAGE);
+  SetMaxSize(max_size);
+  SetSize(0);
+  key_array_[0] = KeyType();
+
+}
+
 
 /**
  * @brief Helper method to get/set the key associated with input "index"(a.k.a
@@ -42,30 +52,45 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Init(int max_size) { UNIMPLEMENTED("TODO(P2
  */
 INDEX_TEMPLATE_ARGUMENTS
 auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::KeyAt(int index) const -> KeyType {
-  UNIMPLEMENTED("TODO(P2): Add implementation.");
+  BUSTUB_ASSERT(index > 0, "Index should be greater than zero!");
+  //Adi To Do : Assure that valid values are being passed for key_array_[index] 
+  return key_array_[index];
 }
 
 /**
- * @brief Set key at the specified index.
- *
- * @param index The index of the key to set. Index must be non-zero.
- * @param key The new value for key
- */
+* @brief Set key at the specified index.
+*
+* @param index The index of the key to set. Index must be non-zero.
+* @param key The new value for key
+*/
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetKeyAt(int index, const KeyType &key) {
-  UNIMPLEMENTED("TODO(P2): Add implementation.");
+  BUSTUB_ASSERT(index > 0, "Index should be greater than zero!");
+  key_array_[index] = key;
+  // page_id_array_[index] = 
 }
+INDEX_TEMPLATE_ARGUMENTS
+void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetValueAt(int index, const ValueType &value) {
+  BUSTUB_ASSERT(index >= 0, "Index should be greater than zero!");
+  page_id_array_[index] = value;
+  // page_id_array_[index] = 
+
+// INDEX_TEMPLATE_ARGUMENTS
+// auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::IndexAt(const KeyType &key) -> int {
+//   BUSTUB_ASSERT(index > 0, "Index should be greater than zero!");
+//   key_array_[index] = key;
+//   // page_id_array_[index] = 
+// }
 
 /**
- * @brief Helper method to get the value associated with input "index"(a.k.a array
- * offset)
- *
- * @param index The index of the value to get.
- * @return Value at index
- */
+* @brief Helper method to get the value associated with input "index"(a.k.a array
+* offset)
+* @param index The index of the value to get.
+* @return Value at index
+*/
 INDEX_TEMPLATE_ARGUMENTS
 auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::ValueAt(int index) const -> ValueType {
-  UNIMPLEMENTED("TODO(P2): Add implementation.");
+  return page_id_array_[index];
 }
 
 // valuetype for internalNode should be page id_t
