@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 #include "common/config.h"
 #include "common/exception.h"
@@ -73,6 +74,7 @@ INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetValueAt(int index, const ValueType &value) {
   BUSTUB_ASSERT(index >= 0, "Index should be greater than zero!");
   page_id_array_[index] = value;
+}
   // page_id_array_[index] = 
 
 // INDEX_TEMPLATE_ARGUMENTS
@@ -92,6 +94,27 @@ INDEX_TEMPLATE_ARGUMENTS
 auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::ValueAt(int index) const -> ValueType {
   return page_id_array_[index];
 }
+INDEX_TEMPLATE_ARGUMENTS
+void B_PLUS_TREE_INTERNAL_PAGE_TYPE::RemoveKeyValue(KeyType &key,KeyComparator &comparator) {
+  int index = -1;
+  int n = GetSize();
+  for(int i = 0;i < n;i +=1){
+    if(comparator(key,key_array_[i]) == 0){
+      index = i;
+    }
+  }
+  int j = 0;
+  for(int i = 0;i < n;i +=1){
+    if(i != index){
+      j +=1;
+      ChangeSizeBy(-1);
+    }
+    key_array_[j] = key_array_[i];
+    page_id_array_[j] = page_id_array_[i];
+  }
+}
+
+
 
 // valuetype for internalNode should be page id_t
 template class BPlusTreeInternalPage<GenericKey<4>, page_id_t, GenericComparator<4>>;

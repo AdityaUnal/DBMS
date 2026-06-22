@@ -109,7 +109,8 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::InsertKeyValue(const KeyType &key, const ValueT
     temp[i] = std::make_pair(key_array_[i], rid_array_[i]);
   }
   temp[n] = std::make_pair(key,value);
-  std::sort(temp.begin(),temp.end(),comparator);
+  std::sort(temp.begin(), temp.end(),
+            [&](const auto &a, const auto &b) { return comparator(a.first, b.first) < 0; });
   for(int i = 0; i <= n; i+=1){
     key_array_[i] = temp[i].first;
     rid_array_[i] = temp[i].second;
@@ -128,12 +129,24 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveKeyValue(const KeyType &key, KeyComparato
     }
   }
   // temp[n] = std::make_pair(key,value);
-  std::sort(temp.begin(),temp.end(),comparator);
+  std::sort(temp.begin(), temp.end(),
+            [&](const auto &a, const auto &b) { return comparator(a.first, b.first) < 0; });
   for(int i = 0; i <= n; i+=1){
     key_array_[i] = temp[i].first;
     rid_array_[i] = temp[i].second;
   }
   ChangeSizeBy(-1);  
+}
+FULL_INDEX_TEMPLATE_ARGUMENTS
+auto B_PLUS_TREE_LEAF_PAGE_TYPE::IndexOfKey(const KeyType &key,KeyComparator &comparator) const -> int {
+  int n = GetSize();
+  for(int i = 0;i < n;i +=1){
+    if(comparator(key_array_[i],key) == 0){
+      return i;
+    }
+  }
+  // temp[n] = std::make_pair(key,value);
+  return -1;  
 }
 
 template class BPlusTreeLeafPage<GenericKey<4>, RID, GenericComparator<4>>;

@@ -55,6 +55,9 @@ void BPlusTreePage::SetMaxSize(int size) {
  * But whether you will take ceil() or floor() depends on your implementation
  */
 auto BPlusTreePage::GetMinSize() const -> int { 
+    if(IsLeafPage()){
+        return 0;
+    }
     return max_size_/2;
 }
 

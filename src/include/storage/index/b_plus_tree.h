@@ -130,6 +130,13 @@ class BPlusTree {
 
   auto ToPrintableBPlusTree(page_id_t root_id) -> PrintableBPlusTree;
 
+  auto pessimist_latch(WritePageGuard& page_guard,std::vector<KeyType> &keys,std::vector<RID> &Rids) -> bool;
+  
+  void get_path_write_guards(Context& ctx,const KeyType &key);
+  void get_path_read_guards(Context& ctx,const KeyType &key);
+
+  auto AddAndSplitLeaf(WritePageGuard& page_guard,WritePageGuard& parent_page_guard,const KeyType &key,const ValueType &Value) -> std::pair<KeyType,page_id_t>;
+
   // member variable
   std::string index_name_;
   KeyComparator comparator_;

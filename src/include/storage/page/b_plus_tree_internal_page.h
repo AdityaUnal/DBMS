@@ -81,6 +81,9 @@ class BPlusTreeInternalPage : public BPlusTreePage {
 
   auto ValueAt(int index) const -> ValueType;
 
+  void RemoveKeyValue(KeyType &key,KeyComparator &comparator);
+
+  // void InsertKeyValue()
   /**
    * @brief For test only, return a string representing all keys in
    * this internal page, formatted as "(key1,key2,key3,...)"

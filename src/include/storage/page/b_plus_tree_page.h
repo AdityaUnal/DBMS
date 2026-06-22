@@ -44,7 +44,7 @@ enum class IndexPageType { INVALID_INDEX_PAGE = 0, LEAF_PAGE, INTERNAL_PAGE };
  * | PageType (4) | CurrentSize (4) | MaxSize (4) |  ...   |
  * ---------------------------------------------------------
  */
-class BPlusTreePage {
+class  BPlusTreePage {
  public:
   // Delete all constructor / destructor to ensure memory safety
   BPlusTreePage() = delete;
