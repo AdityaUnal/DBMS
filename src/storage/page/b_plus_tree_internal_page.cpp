@@ -66,14 +66,15 @@ auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::KeyAt(int index) const -> KeyType {
 */
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetKeyAt(int index, const KeyType &key) {
-  BUSTUB_ASSERT(index > 0, "Index should be greater than zero!");
+  BUSTUB_ASSERT(index > 0, "To Insert Key Index should be greater than zero!");
   key_array_[index] = key;
   // page_id_array_[index] = 
 }
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetValueAt(int index, const ValueType &value) {
-  BUSTUB_ASSERT(index >= 0, "Index should be greater than zero!");
+  BUSTUB_ASSERT(index >= 0, "To Insert Value Index should be greater than zero!");
   page_id_array_[index] = value;
+  ChangeSizeBy(1);
 }
   // page_id_array_[index] = 
 

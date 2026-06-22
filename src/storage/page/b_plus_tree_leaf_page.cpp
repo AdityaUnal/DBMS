@@ -48,6 +48,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::Init(int max_size) {
   next_page_id_ = INVALID_PAGE_ID;
   num_tombstones_ = 0;
   key_array_[0] = KeyType();
+
 }
 
 /**
