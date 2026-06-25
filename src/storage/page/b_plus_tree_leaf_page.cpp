@@ -126,6 +126,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveKeyValue(const KeyType &key, KeyComparato
   std::vector<std::pair<KeyType,ValueType>> temp(n + 1);
   for(int i = 0;i < n;i +=1){
     if(comparator(key_array_[i],key)){
+      ChangeSizeBy(-1);  
       temp[i] = std::make_pair(key_array_[i], rid_array_[i]);
     }
   }
@@ -136,7 +137,6 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveKeyValue(const KeyType &key, KeyComparato
     key_array_[i] = temp[i].first;
     rid_array_[i] = temp[i].second;
   }
-  ChangeSizeBy(-1);  
 }
 FULL_INDEX_TEMPLATE_ARGUMENTS
 auto B_PLUS_TREE_LEAF_PAGE_TYPE::IndexOfKey(const KeyType &key,KeyComparator &comparator) const -> int {

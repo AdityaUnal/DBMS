@@ -125,7 +125,8 @@ TEST(BPlusTreeTests, DISABLED_InsertTest1NoIterator) {
   // allocate header_page
   page_id_t page_id = bpm->NewPage();
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", page_id, bpm, comparator, 2, 3);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", page_id, bpm, comparator, 
+    2, 3);
   GenericKey<8> index_key;
   RID rid;
 

@@ -74,7 +74,6 @@ INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetValueAt(int index, const ValueType &value) {
   BUSTUB_ASSERT(index >= 0, "To Insert Value Index should be greater than zero!");
   page_id_array_[index] = value;
-  ChangeSizeBy(1);
 }
   // page_id_array_[index] = 
 
@@ -112,6 +111,9 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::RemoveKeyValue(KeyType &key,KeyComparator &
     }
     key_array_[j] = key_array_[i];
     page_id_array_[j] = page_id_array_[i];
+  }
+  for(int i = n;i < GetMaxSize();i +=1){
+    page_id_array_[i] = INVALID_PAGE_ID;
   }
 }
 

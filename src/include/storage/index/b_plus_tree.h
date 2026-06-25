@@ -137,7 +137,9 @@ class BPlusTree {
 
   auto AddAndSplitLeaf(WritePageGuard& page_guard,WritePageGuard& parent_page_guard,const KeyType &key,const ValueType &Value) -> std::pair<KeyType,page_id_t>;
   auto AddAndSplitInternal(WritePageGuard& page_guard,WritePageGuard& parent_page_guard,const KeyType &key,const page_id_t &Value) -> std::pair<KeyType,page_id_t>;
-
+  
+  auto DeleteAndMergeLeaf(WritePageGuard& page_guard,const KeyType &key) -> std::pair<KeyType,page_id_t>;
+  auto DeleteAndMergeInternal(WritePageGuard& page_guard,const KeyType &key,const page_id_t &Value) -> std::pair<KeyType,page_id_t>;
   // member variable
   std::string index_name_;
   KeyComparator comparator_;
