@@ -31,6 +31,7 @@
 #include <queue>
 #include <shared_mutex>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "common/config.h"
@@ -123,7 +124,9 @@ class BPlusTree {
   // Do not change this type to a BufferPoolManager!
   std::shared_ptr<TracedBufferPoolManager> bpm_;
 
- private:
+  private:
+  enum class PAGE_RELATION { PREV_PAGE, NEXT_PAGE };
+
   void ToGraph(page_id_t page_id, const BPlusTreePage *page, std::ofstream &out);
 
   void PrintTree(page_id_t page_id, const BPlusTreePage *page);
@@ -138,8 +141,11 @@ class BPlusTree {
   auto AddAndSplitLeaf(WritePageGuard& page_guard,WritePageGuard& parent_page_guard,const KeyType &key,const ValueType &Value) -> std::pair<KeyType,page_id_t>;
   auto AddAndSplitInternal(WritePageGuard& page_guard,WritePageGuard& parent_page_guard,const KeyType &key,const page_id_t &Value) -> std::pair<KeyType,page_id_t>;
   
-  auto DeleteAndMergeLeaf(WritePageGuard& page_guard,const KeyType &key) -> std::pair<KeyType,page_id_t>;
-  auto DeleteAndMergeInternal(WritePageGuard& page_guard,const KeyType &key,const page_id_t &Value) -> std::pair<KeyType,page_id_t>;
+  void RedistributeLeaf(WritePageGuard& left_page_guard, WritePageGuard& right_page_guard, WritePageGuard& parent_page_guard,int& left_idx,int& right_idx);
+  void RedistributeInternal(WritePageGuard& left_page_guard, WritePageGuard& right_page_guard, WritePageGuard& parent_page_guard,int& left_idx,int& right_idx);
+
+  auto DeleteAndMergeLeaf(WritePageGuard& page_guard,WritePageGuard& parent_page_guard,const KeyType &key) -> page_id_t;
+  auto DeleteAndMergeInternal(WritePageGuard& page_guard,WritePageGuard& parent_page_guard ,const KeyType &key,const page_id_t &Value) -> page_id_t;
   // member variable
   std::string index_name_;
   KeyComparator comparator_;
