@@ -531,13 +531,13 @@ void BPLUSTREE_TYPE::RedistributeLeaf(WritePageGuard& left_page_guard,WritePageG
 FULL_INDEX_TEMPLATE_ARGUMENTS
 void BPLUSTREE_TYPE::RedistributeInternal(WritePageGuard& left_page_guard,WritePageGuard& right_page_guard,WritePageGuard& parent_page_guard,int& left_idx,int& right_idx){
   auto left_page = left_page_guard.AsMut<BPlusTreePage>();
-  auto left_internal_page = left_page_guard.AsMut<BPlusTreeInternalPage<KeyType,RID,KeyComparator>>();
+  auto left_internal_page = left_page_guard.AsMut<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator>>();
 
   auto right_page = right_page_guard.AsMut<BPlusTreePage>();
-  auto right_internal_page = right_page_guard.AsMut<BPlusTreeInternalPage<KeyType, RID, KeyComparator>>();
+  auto right_internal_page = right_page_guard.AsMut<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator>>();
 
   int n = left_page->GetSize() + right_page->GetSize();
-  std::vector<std::pair<KeyType,RID>> temp(n);
+  std::vector<std::pair<KeyType,page_id_t>> temp(n);
 
   for(int i = 0;i < left_page->GetSize();i +=1){
     temp[i] = std::make_pair(left_internal_page->KeyAt(i),left_internal_page->ValueAt(i));
@@ -578,20 +578,21 @@ auto BPLUSTREE_TYPE::DeleteAndMergeLeaf(WritePageGuard& page_guard,WritePageGuar
   auto curr_leaf_page = page_guard.AsMut<BPlusTreeLeafPage<KeyType,RID,KeyComparator>>();
   page_id_t curr_page_id = page_guard.GetPageId();
 
-  auto parent_page = page_guard.AsMut<BPlusTreePage>();
-  auto parent_internal_page = page_guard.AsMut<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator>>();
+  auto parent_page = parent_page_guard.AsMut<BPlusTreePage>();
+  auto parent_internal_page = parent_page_guard.AsMut<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator>>();
   
   int idx = -1;
   
   int parent_size = parent_page->GetSize();
   // long long next_size = INT_MAX,prev_size = INT_MAX;
   for(int i = 0;i < parent_size;i +=1){
+    
     // if(comparator_(parent_internal_page->KeyAt(i),key)==0){
     if(page_guard.GetPageId() == parent_internal_page->ValueAt(i)){
       if(i != parent_size -1){
         WritePageGuard next_page_guard = bpm_->WritePage(parent_internal_page->ValueAt(i + 1));
         auto next_page = next_page_guard.AsMut<BPlusTreePage>();
-        if(next_page->GetSize() + curr_page->GetSize() < curr_page->GetMaxSize()){
+        if(next_page->GetSize() + curr_page->GetSize() <= curr_page->GetMaxSize()){
           idx = i + 1;
           break;
         }
@@ -599,7 +600,7 @@ auto BPLUSTREE_TYPE::DeleteAndMergeLeaf(WritePageGuard& page_guard,WritePageGuar
       else if(i != 0){
         WritePageGuard prev_page_guard = bpm_->WritePage(parent_internal_page->ValueAt(i - 1));
         auto prev_page = prev_page_guard.AsMut<BPlusTreePage>();
-        if(prev_page->GetSize() + curr_page->GetSize() < curr_page->GetMaxSize()){
+        if(prev_page->GetSize() + curr_page->GetSize() <= curr_page->GetMaxSize()){
           idx = i - 1;
           break;
         }
@@ -612,12 +613,15 @@ auto BPLUSTREE_TYPE::DeleteAndMergeLeaf(WritePageGuard& page_guard,WritePageGuar
             return curr_page_id;
           }
           other_page_guard = bpm_->WritePage(parent_internal_page->ValueAt(i + 1));
+          int j = i + 1;
+          RedistributeLeaf(page_guard, other_page_guard, parent_page_guard,i,j);
         }
         else{
+          int j = i - 1;
           other_page_guard = bpm_->WritePage(parent_internal_page->ValueAt(i - 1));
+          RedistributeLeaf(other_page_guard, page_guard, parent_page_guard,j,i);
         }
-        curr_leaf_page->RemoveKeyValue(key,comparator_);
-        RedistributeLeaf(page_guard, other_page_guard, parent_page_guard);
+        // curr_leaf_page->RemoveKeyValue(key,comparator_);
       }
     }
   }
@@ -630,7 +634,7 @@ auto BPLUSTREE_TYPE::DeleteAndMergeLeaf(WritePageGuard& page_guard,WritePageGuar
   
   // std::vector<std::pair<KeyType,page_id_t>> temp;
   // bool found = false;
-  curr_leaf_page->RemoveKeyValue(key,comparator_);
+  // curr_leaf_page->RemoveKeyValue(key,comparator_);
   
   for(int i = 0;i < remove_page->GetSize();i +=1){
     curr_leaf_page->InsertKeyValue(remove_leaf_page->KeyAt(i),remove_leaf_page->ValueAt(i),comparator_);
@@ -645,8 +649,8 @@ auto BPLUSTREE_TYPE::DeleteAndMergeInternal(WritePageGuard& page_guard,WritePage
   auto curr_internal_page = page_guard.AsMut<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator>>();
   page_id_t curr_page_id = page_guard.GetPageId();
 
-  auto parent_page = page_guard.AsMut<BPlusTreePage>();
-  auto parent_internal_page = page_guard.AsMut<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator>>();
+  auto parent_page = parent_page_guard.AsMut<BPlusTreePage>();
+  auto parent_internal_page = parent_page_guard.AsMut<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator>>();
   
   int idx = -1;
   
@@ -658,7 +662,7 @@ auto BPLUSTREE_TYPE::DeleteAndMergeInternal(WritePageGuard& page_guard,WritePage
       if(i != parent_size -1){
         WritePageGuard next_page_guard = bpm_->WritePage(parent_internal_page->ValueAt(i + 1));
         auto next_page = next_page_guard.AsMut<BPlusTreePage>();
-        if(next_page->GetSize() + curr_page->GetSize() < curr_page->GetMaxSize()){
+        if(next_page->GetSize() + curr_page->GetSize() <= curr_page->GetMaxSize()){
           idx = i + 1;
           break;
         }
@@ -666,7 +670,7 @@ auto BPLUSTREE_TYPE::DeleteAndMergeInternal(WritePageGuard& page_guard,WritePage
       else if(i != 0){
         WritePageGuard prev_page_guard = bpm_->WritePage(parent_internal_page->ValueAt(i - 1));
         auto prev_page = prev_page_guard.AsMut<BPlusTreePage>();
-        if(prev_page->GetSize() + curr_page->GetSize() < curr_page->GetMaxSize()){
+        if(prev_page->GetSize() + curr_page->GetSize() <= curr_page->GetMaxSize()){
           idx = i - 1;
           break;
         }
@@ -679,11 +683,14 @@ auto BPLUSTREE_TYPE::DeleteAndMergeInternal(WritePageGuard& page_guard,WritePage
             return curr_page_id;
           }
           other_page_guard = bpm_->WritePage(parent_internal_page->ValueAt(i + 1));
+          int j = i + 1;
+          RedistributeLeaf(page_guard, other_page_guard, parent_page_guard,i,j);
         }
         else{
           other_page_guard = bpm_->WritePage(parent_internal_page->ValueAt(i - 1));
+          int j = i - 1;
+          RedistributeLeaf(other_page_guard, page_guard, parent_page_guard,j,i);
         }
-        RedistributeLeaf(page_guard, other_page_guard, parent_page_guard);
         return INVALID_PAGE_ID;
       }
     }
@@ -760,28 +767,33 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key) {
   /*
   * Do a root check here
   */
-  if(leaf_page->GetSize() > leaf_page->GetMinSize() ){
-    if(leaf_page_id == ctx.root_page_id_){
-      if(leaf_page->GetSize() == 1){
-        leaf_page_guard.Drop();
-        guard.Drop();
-        WritePageGuard header_guard = bpm_->WritePage(header_page_id_);
-        auto header_page = header_guard.AsMut<BPlusTreeHeaderPage>();
-        if(header_page->root_page_id_ == root_page_id){
-          header_page->root_page_id_ = INVALID_PAGE_ID;
-          return;
-        }
+  if(leaf_page_id == ctx.root_page_id_){
+    if(leaf_page->GetSize() == 1){
+      leaf_page_guard.Drop();
+      guard.Drop();
+      WritePageGuard header_guard = bpm_->WritePage(header_page_id_);
+      auto header_page = header_guard.AsMut<BPlusTreeHeaderPage>();
+      if(header_page->root_page_id_ == root_page_id){
+        header_page->root_page_id_ = INVALID_PAGE_ID;
+        return;
       }
     }
+  }
+
+  if(leaf_page->GetSize() > leaf_page->GetMinSize() ){
     write_leaf_page->RemoveKeyValue(key,comparator_);
     return;
   }
   ctx.read_set_.clear();
   guard.Drop();
+  //   ctx.header_page_ = bpm_->WritePage(header_page_id_);
+  // auto header_guard = ctx.header_page_->AsMut<BPlusTreeHeaderPage>();
+  // ctx.root_page_id_ = header_guard->root_page_id_;
   ctx.header_page_ = bpm_->WritePage(header_page_id_);
   
   auto header_guard = ctx.header_page_->AsMut<BPlusTreeHeaderPage>();
   ctx.root_page_id_ = header_guard->root_page_id_;
+  leaf_page_guard.Drop();
   get_path_write_guards(ctx, key);
 
   KeyType remove_key;
@@ -795,24 +807,26 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key) {
     */
     auto curr_page = curr_page_guard.AsMut<BPlusTreePage>();
     page_id_t curr_page_id = curr_page_guard.GetPageId();
-    if(curr_page->IsLeafPage()){
-      auto write_leaf_page = curr_page_guard.AsMut<BPlusTreeLeafPage<KeyType, RID, KeyComparator>>();
-      if(!write_leaf_page->IsKeyPresent(key,comparator_)){
-        return ;
-      }
-      if(curr_page_id == root_page_id){
+    if(curr_page->GetSize() >= curr_page->GetMinSize() ){
+      if(curr_page->IsLeafPage()){
+        auto write_leaf_page = curr_page_guard.AsMut<BPlusTreeLeafPage<KeyType, RID, KeyComparator>>();
+        if(!write_leaf_page->IsKeyPresent(key,comparator_)){
+          return ;
+        }
         write_leaf_page->RemoveKeyValue(key,comparator_);
-        if(curr_page->GetSize() == 0){
-          curr_page_guard.Drop();
-          header_guard->root_page_id_ = INVALID_PAGE_ID;
+        if(curr_page_id == ctx.root_page_id_){
+          if(curr_page->GetSize() == 0){
+            curr_page_guard.Drop();
+            header_guard->root_page_id_ = INVALID_PAGE_ID;
+          }
           return;
         }
-      }
-      if(curr_page->GetSize() > curr_page->GetMinSize() ){
-        write_leaf_page->RemoveKeyValue(key,comparator_);
         return;
       }
       else{
+        /*
+        *Check Redistribute
+        */
         remove_value = DeleteAndMergeLeaf(curr_page_guard, ctx.write_set_.front(),key);
         if(remove_value == INVALID_PAGE_ID){
           return ;
@@ -821,49 +835,34 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key) {
     }
     else{
       int n = curr_page->GetSize();
+      auto curr_internal_page = curr_page_guard.AsMut<BPlusTreeInternalPage<KeyType, page_id_t,KeyComparator>>();
+      // write_leaf_page->RemoveKeyValue(key,comparator_);
+      std::vector<std::pair<KeyType,page_id_t>> temp(n - 1);
+      for(int i = 0;i < n;i +=1){
+        if(curr_internal_page->ValueAt(i) != remove_value){
+          temp.push_back(std::make_pair(curr_internal_page->KeyAt(i), curr_internal_page->ValueAt(i)));
+        }
+        else{
+          curr_page->ChangeSizeBy(-1);
+        }
+      }
+      std::sort(temp.begin(), temp.end(),
+      [&](const auto &a, const auto &b) { return comparator_(a.first, b.first) < 0; });
+      for(int i = 0;i < n - 1;i +=1){
+        if(i!=0){
+          curr_internal_page->SetKeyAt(i,temp[i].first);
+        }
+        curr_internal_page->SetValueAt(i,temp[i].second);
+      }
       if(curr_page_id == root_page_id){
-        auto curr_internal_page = curr_page_guard.AsMut<BPlusTreeInternalPage<KeyType, page_id_t,KeyComparator>>();
-        // write_leaf_page->RemoveKeyValue(key,comparator_);
-        std::vector<std::pair<KeyType,page_id_t>> temp(n - 1);
-        for(int i = 0;i < n;i +=1){
-          if(curr_internal_page->ValueAt(i) != remove_value){
-            temp.push_back(std::make_pair(curr_internal_page->KeyAt(i), curr_internal_page->ValueAt(i)));
-          }
-          else{
-            curr_page->ChangeSizeBy(-1);
-          }
-        }
-        std::sort(temp.begin(),temp.end());
-        for(int i = 0;i < n - 1;i +=1){
-          if(i!=0){
-            curr_internal_page->SetKeyAt(i,temp[i].first);
-          }
-          curr_internal_page->SetValueAt(i,temp[i].second);
-        }
         if(curr_page->GetSize() == 0){
           curr_page_guard.Drop();
           header_guard->root_page_id_ = INVALID_PAGE_ID;
         }
         return;
       }
-      if(curr_page->GetSize() > curr_page->GetMinSize()){
-        auto curr_internal_page = curr_page_guard.AsMut<BPlusTreeInternalPage<KeyType, page_id_t,KeyComparator>>();
-        std::vector<std::pair<KeyType,page_id_t>> temp(n - 1);
-        for(int i = 0;i < n;i +=1){
-          if(curr_internal_page->ValueAt(i) != remove_value){
-            temp.push_back(std::make_pair(curr_internal_page->KeyAt(i), curr_internal_page->ValueAt(i)));
-          }
-          else{
-            curr_page->ChangeSizeBy(-1);
-          }
-        }
-        std::sort(temp.begin(),temp.end());
-        for(int i = 0;i < n - 1;i +=1){
-          if(i!=0){
-            curr_internal_page->SetKeyAt(i,temp[i].first);
-          }
-          curr_internal_page->SetValueAt(i,temp[i].second);
-        }
+      
+      if(curr_page->GetSize() >= curr_page->GetMinSize()){
         return;
       }
       else{

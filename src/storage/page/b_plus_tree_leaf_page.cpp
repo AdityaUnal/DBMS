@@ -122,18 +122,20 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::InsertKeyValue(const KeyType &key, const ValueT
 FULL_INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveKeyValue(const KeyType &key, KeyComparator &comparator) {
   int n = GetSize();
-  BUSTUB_ASSERT(n < GetMaxSize(), "No space in leaf to insert key-value pair.");
-  std::vector<std::pair<KeyType,ValueType>> temp(n + 1);
+  // BUSTUB_ASSERT(n < GetMaxSize(), "No space in leaf to insert key-value pair.");
+  std::vector<std::pair<KeyType,ValueType>> temp(n - 1);
   for(int i = 0;i < n;i +=1){
-    if(comparator(key_array_[i],key)){
-      ChangeSizeBy(-1);  
+    if(comparator(key_array_[i],key)!=0){
       temp[i] = std::make_pair(key_array_[i], rid_array_[i]);
+    }
+    else{
+      ChangeSizeBy(-1);  
     }
   }
   // temp[n] = std::make_pair(key,value);
   std::sort(temp.begin(), temp.end(),
             [&](const auto &a, const auto &b) { return comparator(a.first, b.first) < 0; });
-  for(int i = 0; i <= n; i+=1){
+  for(int i = 0; i < n - 1; i+=1){
     key_array_[i] = temp[i].first;
     rid_array_[i] = temp[i].second;
   }
